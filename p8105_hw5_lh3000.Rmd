@@ -30,7 +30,7 @@ scale_fill_discrete = scale_fill_viridis_d
 
 ## Problem 1
 
-The raw dataset contains information about criminal homicides in 50 large U.S. cities from 2012 to 2017, collected by The Washington Post. The variable included are the location of the killing, whether an arrest was made and, in most cases, basic demographic information about each victim.
+The raw dataset contains information about criminal homicides in 50 large U.S. cities from 2012 to 2017, collected by The Washington Post. The variable included are the location of the killing, the report date, whether an arrest was made and the basic demographic information about each victim.
 
 
 Read in the data.
@@ -94,6 +94,7 @@ results_df %>%
   ggplot(aes(x = city_state, y = estimate)) +
   geom_point() +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+  labs(title = "Estimates of the proportion of unsolved homicides and CIs for city") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
 ```
 
@@ -137,7 +138,8 @@ Make a spaghetti plot showing observations on each subject over time.
 ```{r}
 study_df %>% 
   ggplot(aes(x = week, y = obs, group = subject, color = arm)) +
-  geom_line()
+  geom_line() +
+  labs(title = "Observations on each subject over time")
 ```
 
 Overtime, for the experimental arm, observations tend to increase while for the control arm, observations almost stay the same.
@@ -195,7 +197,8 @@ rejected_df %>%
   summarize(prop_rejected = sum(rejected == "reject")/n()) %>% 
   ggplot(aes(x = mu_value, y = prop_rejected)) +
   geom_bar(stat = "identity") +
-  labs(x = "true value of µ", y = "power")
+  labs(x = "true value of µ", y = "power",
+       title = "Power vs. True value of µ")
 ```
 
 Since we assume µ = 0 and effect size is calculated by the true value of µ - 0 = true value of µ, we can treat x axis as a representation of effect size.
@@ -203,44 +206,14 @@ As effect size increases, power also increases - from fast to slow, until power 
 
 
 
-1) Make a plot showing the average estimate of µ-hat vs. the true value of µ.
-
-
-2) Make a plot showing the average estimate of µ-hat only in samples for which the null was rejected vs. the true value of µ.
-
-Two separate plots:
-
-```{r}
-all_plot = 
-  rejected_df %>%
-  group_by(mu_value) %>% 
-  summarize(mean_mu = mean(estimate)) %>% 
-  ggplot(aes(x = mu_value, y = mean_mu)) +
-  geom_point() +
-  labs(x = "true value of µ", y = "average estimate of µ-hat", 
-       title = "All samples")
-
-rejected_plot = 
-  rejected_df %>%
-  filter(rejected == "reject") %>% 
-  group_by(mu_value) %>% 
-  summarize(mean_mu = mean(estimate)) %>% 
-  ggplot(aes(x = mu_value, y = mean_mu)) +
-  geom_point() +
-  labs(x = "true value of µ", y = "average estimate of µ-hat",
-       title = "Samples where the null was rejected")
-
-all_plot + rejected_plot
-```
-
-One plot (the second plot overlays on the first):
+Make a plot showing the average estimate of µ-hat vs. the true value of µ, overlay with a plot showing the average estimate of µ-hat only in samples for which the null was rejected vs. the true value of µ.
 
 ```{r}
 all_plot_df = 
   rejected_df %>%
   group_by(mu_value) %>% 
   summarize(mean_mu = mean(estimate)) %>% 
-  mutate(samples = "all")
+  mutate(samples = "all") 
 
 rejected_plot_df = 
   rejected_df %>%
@@ -249,15 +222,17 @@ rejected_plot_df =
   summarize(mean_mu = mean(estimate)) %>% 
   mutate(samples = "reject")
 
+
 ggplot(data = all_plot_df, aes(x = mu_value, y = mean_mu, color = samples)) + 
   geom_point() + 
   geom_point(data = rejected_plot_df) +
-  labs(x = "true value of µ", y = "average estimate of µ-hat")
+  labs(x = "true value of µ", y = "average estimate of µ-hat",
+       title = "Average estimate of µ-hat vs. True value of µ")
 ```
 
 When µ is smaller than 3, the sample average of µ-hat across tests for which the null is rejected approximately equal to the true value of µ. But µ gets larger, the sample average of µ-hat across tests where the null is rejected approaches (even coincides with) the true value of µ.
 
 * The reasoning:
-In the previous bar graph, we can see the power is relatively low when µ is smaller than 3, which means the proportion of times the null was rejected is low. Therefore, the number of samples with µ smaller than 3 and the null is rejected is relatively small. These sample means indeed have more variation and their average is more likely to deviate from the true mean. However, as µ gets bigger, there are more samples with rejected null, so the sample average of µ-hat becomes more stable and yields a more unbiased estimation of the true mean.
+In the previous bar graph, we can see the power is relatively low when µ is smaller than 3, which means the proportion of times the null was rejected is low. Therefore, for µ smaller than 3, the number of samples with rejected null is relatively small. These sample means indeed have more variation and their average is more likely to deviate from the true mean. However, as µ gets bigger, there are more samples with rejected null, so the sample average of µ-hat becomes more stable and yields a more unbiased estimation of the true mean.
 
  
